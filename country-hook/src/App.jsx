@@ -18,7 +18,25 @@ const useField = (type) => {
 const useCountry = (name) => {
   const [country, setCountry] = useState(null)
 
-  useEffect(() => {})
+  useEffect(() => {
+    if (name === '') return
+    axios.get(`https://studies.cs.helsinki.fi/restcountries/api/name/${name}`)
+          .then(response => {
+            const data = response.data
+            const newCountry = {
+              found: true,
+              data: {
+                population: data.population,
+                name: data.name.common,
+                flag: data.flags.png,
+                capital: data.capital[0]
+              }
+            }
+            setCountry(newCountry)
+          }).catch(response => {
+            setCountry({ found: false })
+          })
+  },[name])
 
   return country
 }
