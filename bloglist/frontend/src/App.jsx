@@ -160,7 +160,7 @@ const App = () => {
         <button onClick={handleLogout} data-testid='logout-button' >logout</button>
       </p>
       { blogsResult.isLoading && <p>Loading blogs</p> }
-      { blogsResult.isSuccess && <Blogs blogs={blogsResult.data} addLike={addLike} user={user} removeBlog={removeBlog} /> }
+      { blogsResult.isSuccess && <Blogs token={blogService.getToken()} blogs={blogsResult.data} user={user} /> }
       <Togglable buttonLabel='new blog' ref={blogFormRef}>
         <BlogForm token={blogService.getToken()}  />
       </Togglable>

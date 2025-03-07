@@ -1,12 +1,32 @@
 import { useState } from 'react'
 import PropTypes from 'prop-types'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { changeBlog, deleteBlog } from '../requests'
 
-const Blog = ({ blog, addLike, user, removeBlog }) => {
+const Blog = ({ blog, user, token }) => {
   const [showAll, setShowAll] = useState(false)
+  const queryClient = useQueryClient()
 
   const toggleShowAll = () => setShowAll(!showAll)
 
   const thisUsersBlog = blog.user.username === user?.username
+
+  const addLikeMutation = useMutation({
+    mutationFn: changeBlog,
+    onSuccess: (recievedBlog) => {
+      const changedBlog = { ...recievedBlog, user: blog.user } // changing from just id to whole user
+      const blogs = queryClient.getQueryData(['blogs'])
+      const changedBlogs = blogs.map(blog => blog.id === changedBlog.id ? changedBlog : blog)
+      queryClient.setQueryData(['blogs'], changedBlogs)
+    }
+  })
+
+  const removeBlogMutation = useMutation({
+    mutationFn: deleteBlog,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blogs'] })
+    }
+  })
 
 
   const extraInfo = () => (
@@ -24,12 +44,17 @@ const Blog = ({ blog, addLike, user, removeBlog }) => {
     </>
   )
 
-  const handleLike = async () => {
-    const changedBlog = await addLike(blog)
+  const handleLike = () => {
+    const changedBlog = {
+      ...blog,
+      user: blog.user.id, // server uses just user.id as user
+      likes: blog.likes+1
+    }
+    addLikeMutation.mutate({ blog: changedBlog, token })
   }
 
-  const handleRemove = async () => {
-    await removeBlog(blog)
+  const handleRemove = () => {
+    removeBlogMutation.mutate({ id: blog.id, token })
   }
 
   const blogStyle = {
@@ -56,8 +81,7 @@ const Blog = ({ blog, addLike, user, removeBlog }) => {
 Blog.propTypes = {
   blog: PropTypes.object.isRequired,
   user: PropTypes.object.isRequired,
-  addLike: PropTypes.func.isRequired,
-  removeBlog: PropTypes.func.isRequired
+  token: PropTypes.string.isRequired
 }
 
 export default Blog

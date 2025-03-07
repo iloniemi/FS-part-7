@@ -1,19 +1,18 @@
 import Blog from './Blog'
 import PropTypes from 'prop-types'
 
-const Blogs = ({ blogs, addLike, user, removeBlog }) => {
+const Blogs = ({ blogs, user, token }) => {
   const blogsByLikes = (firstBlog, secondBlog) => secondBlog.likes - firstBlog.likes
 
   return <div>
-    {blogs.sort(blogsByLikes).map(blog => <Blog key={blog.id} blog={blog} addLike={addLike} user={user} removeBlog={removeBlog} /> )}
+    {blogs.sort(blogsByLikes).map(blog => <Blog token={token} key={blog.id} blog={blog} user={user} /> )}
   </div>
 }
 
 Blogs.propTypes = {
   blogs: PropTypes.array.isRequired,
   user: PropTypes.object.isRequired,
-  addLike: PropTypes.func.isRequired,
-  removeBlog: PropTypes.func.isRequired
+  token: PropTypes.string.isRequired
 }
 
 export default Blogs
