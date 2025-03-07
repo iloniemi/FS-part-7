@@ -1,17 +1,31 @@
 import { useState } from 'react'
 import InputRow from './InputRow'
-import PropTypes from 'prop-types'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createBlog } from '../requests'
+import { useUserValue } from '../UserContext'
+import { setNotification, useNotificationDispatch } from '../NotificationContext'
 
-const BlogForm = ({ token }) => {
+const BlogForm = () => {
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [url, setUrl] = useState('')
+
+  const notificationDispatch = useNotificationDispatch()
+  const showNotification = (message) => setNotification(notificationDispatch, message)
+
+  const user = useUserValue()
+  const token = user.token
   const queryClient = useQueryClient()
   const newBlogMutation = useMutation({
     mutationFn: createBlog,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['blogs'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['blogs'] }),
+    onError: (exception) => {
+      showNotification('something went wrong')
+      console.log(exception)
+      if (exception.response.status === 400) {
+        showNotification(exception.response.data.error)
+      }
+    }
   })
 
   const handleNewBlog = (event) => {
@@ -38,10 +52,6 @@ const BlogForm = ({ token }) => {
       <button type='submit' data-testid='new-blog-submit-button' >create</button>
     </form>
   </>
-}
-
-BlogForm.propTypes = {
-  token: PropTypes.string.isRequired
 }
 
 export default BlogForm

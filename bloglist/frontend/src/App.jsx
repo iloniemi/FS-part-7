@@ -8,6 +8,7 @@ import Togglable from './components/Togglable'
 import { setNotification, useNotificationDispatch, useNotificationText } from './NotificationContext.jsx'
 import { useQuery } from '@tanstack/react-query'
 import { getBlogs } from './requests.js'
+import { useUserDispatch, useUserValue, userActions } from './UserContext.jsx'
 
 
 const App = () => {
@@ -15,6 +16,8 @@ const App = () => {
   const [user, setUser] = useState(null)
   const notificationText = useNotificationText()
   const notificationDispatch = useNotificationDispatch()
+  const userDispatch = useUserDispatch()
+  const loggedInUser = useUserValue()
 
   const showNotification = (message) => {
     setNotification(notificationDispatch, message)
@@ -40,8 +43,12 @@ const App = () => {
     const loggedUserJSON = window.localStorage.getItem('loggedBlogappUser')
     if (loggedUserJSON) {
       const loggedUser = JSON.parse(loggedUserJSON)
-      setUser(loggedUser)
-      blogService.setToken(loggedUser.token)
+
+      // uusi
+      userDispatch(userActions.setUser(loggedUser))
+      // vanha
+      //setUser(loggedUser)
+      //blogService.setToken(loggedUser.token)
     }
   }, [])
 
@@ -57,8 +64,11 @@ const App = () => {
       window.localStorage.setItem(
         'loggedBlogappUser', JSON.stringify(loggedUser)
       )
-      blogService.setToken(loggedUser.token)
-      setUser(loggedUser)
+      // uusi
+      userDispatch(userActions.setUser(loggedUser))
+      // vanha
+      //blogService.setToken(loggedUser.token)
+      //setUser(loggedUser)
 
     } catch (exception) {
       showNotification('wrong credentials')
@@ -66,14 +76,18 @@ const App = () => {
   }
 
   const handleLogout = () => {
-    console.log(`logged out ${user.name}`)
+    console.log(`logged out ${loggedInUser.name}`)
 
     window.localStorage.removeItem('loggedBlogappUser')
-    blogService.removeToken()
-    setUser(null)
+    // uusi
+    userDispatch(userActions.reset())
+    // vanha
+    //blogService.removeToken()
+    //setUser(null)
+
     showNotification('logged out')
   }
-
+  /*
   const handleCreateBlog = async (title, author, url) => {
     const newBlog = { title, author, url }
     console.log('sending blog: ', newBlog)
@@ -142,9 +156,10 @@ const App = () => {
       showNotification(exception.response.data.error)
     }
   }
+  */
 
   // When not logged in
-  if (!user) return (
+  if (!loggedInUser) return (
     <div>
       { notificationText && <h1>{notificationText}</h1> }
       <LoginForm handleLogin={handleLogin} />
@@ -156,11 +171,11 @@ const App = () => {
       { notificationText && <h1>{notificationText}</h1> }
       <h2>blogs</h2>
       <p>
-        {user.name} logged in
+        {loggedInUser.name} logged in
         <button onClick={handleLogout} data-testid='logout-button' >logout</button>
       </p>
       { blogsResult.isLoading && <p>Loading blogs</p> }
-      { blogsResult.isSuccess && <Blogs token={blogService.getToken()} blogs={blogsResult.data} user={user} /> }
+      { blogsResult.isSuccess && <Blogs blogs={blogsResult.data} /> }
       <Togglable buttonLabel='new blog' ref={blogFormRef}>
         <BlogForm token={blogService.getToken()}  />
       </Togglable>

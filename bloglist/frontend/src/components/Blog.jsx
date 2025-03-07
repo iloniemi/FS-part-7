@@ -2,10 +2,17 @@ import { useState } from 'react'
 import PropTypes from 'prop-types'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { changeBlog, deleteBlog } from '../requests'
+import { useUserValue } from '../UserContext'
+import { setNotification, useNotificationDispatch } from '../NotificationContext'
 
-const Blog = ({ blog, user, token }) => {
+const Blog = ({ blog }) => {
   const [showAll, setShowAll] = useState(false)
   const queryClient = useQueryClient()
+  const user = useUserValue()
+  const token = user.token
+  const notificationDispatch = useNotificationDispatch()
+
+  const showNotification = (message) => setNotification(notificationDispatch, message)
 
   const toggleShowAll = () => setShowAll(!showAll)
 
@@ -18,6 +25,13 @@ const Blog = ({ blog, user, token }) => {
       const blogs = queryClient.getQueryData(['blogs'])
       const changedBlogs = blogs.map(blog => blog.id === changedBlog.id ? changedBlog : blog)
       queryClient.setQueryData(['blogs'], changedBlogs)
+    },
+    onError: (exception) => {
+      showNotification('something went wrong')
+      console.log(exception)
+      if (exception.response.status === 400) {
+        showNotification(exception.response.data.error)
+      }
     }
   })
 
@@ -25,6 +39,10 @@ const Blog = ({ blog, user, token }) => {
     mutationFn: deleteBlog,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blogs'] })
+    },
+    onError: (exception) => {
+      console.log('error', exception)
+      showNotification(exception.response.data.error)
     }
   })
 
@@ -80,8 +98,6 @@ const Blog = ({ blog, user, token }) => {
 
 Blog.propTypes = {
   blog: PropTypes.object.isRequired,
-  user: PropTypes.object.isRequired,
-  token: PropTypes.string.isRequired
 }
 
 export default Blog
