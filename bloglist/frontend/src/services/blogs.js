@@ -6,6 +6,7 @@ const createConfig = () => ({ headers: { Authorization: token } })
 
 const setToken = newToken => token = `Bearer ${newToken}`
 const removeToken = () => token = null
+const getToken = () => token
 
 const getAll = () => {
   const request = axios.get(baseUrl)
@@ -34,4 +35,4 @@ const remove = async id => {
   await axios.delete(`${baseUrl}/${id}`, createConfig())
 }
 
-export default { getAll, create, setToken, removeToken, update, remove }
+export default { getAll, create, setToken, removeToken, getToken, update, remove }

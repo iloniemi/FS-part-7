@@ -1,17 +1,28 @@
 import { useState } from 'react'
 import InputRow from './InputRow'
 import PropTypes from 'prop-types'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { createBlog } from '../requests'
 
-const BlogForm = ({ handleCreateBlog }) => {
+const BlogForm = ({ token }) => {
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [url, setUrl] = useState('')
-
+  const queryClient = useQueryClient()
+  const newBlogMutation = useMutation({
+    mutationFn: createBlog,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['blogs'] })
+  })
 
   const handleNewBlog = (event) => {
     event.preventDefault()
     console.log('create new blog')
-    handleCreateBlog(title, author, url)
+
+    newBlogMutation.mutate({
+      blog: { title, author, url },
+      token
+    })
+
     setTitle('')
     setAuthor('')
     setUrl('')
@@ -30,7 +41,7 @@ const BlogForm = ({ handleCreateBlog }) => {
 }
 
 BlogForm.propTypes = {
-  handleCreateBlog: PropTypes.func.isRequired
+  token: PropTypes.string.isRequired
 }
 
 export default BlogForm

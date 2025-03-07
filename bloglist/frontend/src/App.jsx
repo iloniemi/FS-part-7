@@ -6,6 +6,8 @@ import BlogForm from './components/BlogForm'
 import LoginForm from './components/LoginForm'
 import Togglable from './components/Togglable'
 import { setNotification, useNotificationDispatch, useNotificationText } from './NotificationContext.jsx'
+import { useQuery } from '@tanstack/react-query'
+import { getBlogs } from './requests.js'
 
 
 const App = () => {
@@ -14,16 +16,24 @@ const App = () => {
   const notificationText = useNotificationText()
   const notificationDispatch = useNotificationDispatch()
 
+  const showNotification = (message) => {
+    setNotification(notificationDispatch, message)
+  }
 
   const blogFormRef = useRef()
 
   const blogsByLikes = (firstBlog, secondBlog) => secondBlog.likes - firstBlog.likes
-
   useEffect(() => {
     blogService.getAll().then(blogs =>
       setBlogs( blogs )
     )
   }, [])
+  // new way
+  const blogsResult = useQuery({
+    queryKey: ['blogs'],
+    queryFn: getBlogs
+  })
+  console.log(JSON.parse(JSON.stringify(blogsResult)))
 
   // Getting logged in user from localStorage
   useEffect(() => {
@@ -35,9 +45,6 @@ const App = () => {
     }
   }, [])
 
-  const showNotification = (message) => {
-    setNotification(notificationDispatch, message)
-  }
 
   const handleLogin = async (username, password) => {
     try {
@@ -152,9 +159,10 @@ const App = () => {
         {user.name} logged in
         <button onClick={handleLogout} data-testid='logout-button' >logout</button>
       </p>
-      <Blogs blogs={blogs} addLike={addLike} user={user} removeBlog={removeBlog} />
+      { blogsResult.isLoading && <p>Loading blogs</p> }
+      { blogsResult.isSuccess && <Blogs blogs={blogsResult.data} addLike={addLike} user={user} removeBlog={removeBlog} /> }
       <Togglable buttonLabel='new blog' ref={blogFormRef}>
-        <BlogForm handleCreateBlog={handleCreateBlog} />
+        <BlogForm token={blogService.getToken()}  />
       </Togglable>
     </div>
   )
