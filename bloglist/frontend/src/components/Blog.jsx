@@ -4,19 +4,22 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { changeBlog, deleteBlog } from '../requests'
 import { useUserValue } from '../UserContext'
 import { setNotification, useNotificationDispatch } from '../NotificationContext'
+import { useParams } from 'react-router-dom'
 
-const Blog = ({ blog }) => {
+const Blog = ({ blogs }) => {
   const [showAll, setShowAll] = useState(false)
   const queryClient = useQueryClient()
   const user = useUserValue()
   const token = user.token
   const notificationDispatch = useNotificationDispatch()
+  const id = useParams().id
+  const blog = blogs.find(blog => blog.id === id)
 
   const showNotification = (message) => setNotification(notificationDispatch, message)
 
   const toggleShowAll = () => setShowAll(!showAll)
 
-  const thisUsersBlog = blog.user.username === user?.username
+  const thisUsersBlog = blog.user.username === user.username
 
   const addLikeMutation = useMutation({
     mutationFn: changeBlog,
@@ -46,22 +49,6 @@ const Blog = ({ blog }) => {
     }
   })
 
-
-  const extraInfo = () => (
-    <>
-      <div data-testid={`blog-url-${blog.id}`} >{blog.url}</div>
-      <div data-testid={`blog-likes-${blog.id}`} >
-        {`likes ${blog.likes}`}
-        <button onClick={handleLike} data-testid={`blog-like-button-${blog.id}`}>
-          like
-        </button></div>
-      <div>{blog.user.name}</div>
-      { thisUsersBlog && <div><button onClick={handleRemove} data-testid={`blog-remove-button-${blog.id}`} >
-        remove
-      </button></div>}
-    </>
-  )
-
   const handleLike = () => {
     const changedBlog = {
       ...blog,
@@ -86,18 +73,24 @@ const Blog = ({ blog }) => {
   return (
     <div style={ blogStyle }>
       <div>
-        { blog.title} {blog.author }
-        <button onClick={ toggleShowAll } data-testid={`blog-info-toggle-button-${blog.id}`} >
-          { showAll ? 'hide' : 'view' }
-        </button>
+        <h1>{ `${blog.title} by ${blog.author}` }</h1>
+        <a href={blog.url} data-testid={`blog-url-${blog.id}`} >{blog.url}</a>
+        <div data-testid={`blog-likes-${blog.id}`} >
+          {`likes ${blog.likes}`}
+          <button onClick={handleLike} data-testid={`blog-like-button-${blog.id}`}>
+          like
+          </button></div>
+        <div>added by {blog.user.name}</div>
+        { thisUsersBlog && <div><button onClick={handleRemove} data-testid={`blog-remove-button-${blog.id}`} >
+        remove
+        </button></div>}
       </div>
-      { showAll && extraInfo() }
     </div>
   )
 }
 
 Blog.propTypes = {
-  blog: PropTypes.object.isRequired,
+  blogs: PropTypes.array.isRequired,
 }
 
 export default Blog

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import Blogs from './components/Blogs.jsx'
 import blogService from './services/blogs'
 import loginService from './services/login'
@@ -7,13 +7,15 @@ import LoginForm from './components/LoginForm'
 import Togglable from './components/Togglable'
 import { setNotification, useNotificationDispatch, useNotificationText } from './NotificationContext.jsx'
 import { useQuery } from '@tanstack/react-query'
-import { getBlogs } from './requests.js'
+import { getBlogs, getUsers } from './requests.js'
 import { useUserDispatch, useUserValue, userActions } from './UserContext.jsx'
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import Users from './components/Users.jsx'
+import User from './components/User.jsx'
+import Blog from './components/Blog.jsx'
 
 
 const App = () => {
-  const [blogs, setBlogs] = useState([])
-  const [user, setUser] = useState(null)
   const notificationText = useNotificationText()
   const notificationDispatch = useNotificationDispatch()
   const userDispatch = useUserDispatch()
@@ -25,30 +27,28 @@ const App = () => {
 
   const blogFormRef = useRef()
 
-  const blogsByLikes = (firstBlog, secondBlog) => secondBlog.likes - firstBlog.likes
-  useEffect(() => {
-    blogService.getAll().then(blogs =>
-      setBlogs( blogs )
-    )
-  }, [])
   // new way
   const blogsResult = useQuery({
     queryKey: ['blogs'],
     queryFn: getBlogs
   })
   console.log(JSON.parse(JSON.stringify(blogsResult)))
+  const blogs = blogsResult.data
+
+  const usersResult = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+  })
+  console.log(JSON.parse(JSON.stringify(usersResult)))
+
+  const users = usersResult.data
 
   // Getting logged in user from localStorage
   useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem('loggedBlogappUser')
     if (loggedUserJSON) {
       const loggedUser = JSON.parse(loggedUserJSON)
-
-      // uusi
       userDispatch(userActions.setUser(loggedUser))
-      // vanha
-      //setUser(loggedUser)
-      //blogService.setToken(loggedUser.token)
     }
   }, [])
 
@@ -60,16 +60,10 @@ const App = () => {
         password
       })
       console.log('logged in as ', loggedUser.name)
-
       window.localStorage.setItem(
         'loggedBlogappUser', JSON.stringify(loggedUser)
       )
-      // uusi
       userDispatch(userActions.setUser(loggedUser))
-      // vanha
-      //blogService.setToken(loggedUser.token)
-      //setUser(loggedUser)
-
     } catch (exception) {
       showNotification('wrong credentials')
     }
@@ -79,84 +73,13 @@ const App = () => {
     console.log(`logged out ${loggedInUser.name}`)
 
     window.localStorage.removeItem('loggedBlogappUser')
-    // uusi
     userDispatch(userActions.reset())
-    // vanha
-    //blogService.removeToken()
-    //setUser(null)
-
     showNotification('logged out')
   }
-  /*
-  const handleCreateBlog = async (title, author, url) => {
-    const newBlog = { title, author, url }
-    console.log('sending blog: ', newBlog)
 
-    try {
-      const addedBlog = await blogService.create(newBlog)
-      setBlogs(blogs.concat(addedBlog))
-      console.log('received blog: ', addedBlog)
-      blogFormRef.current.toggleVisibility()
-      showNotification(`${addedBlog.title} by ${addedBlog.author || 'Anonymous'} added`)
-
-    } catch (exception) {
-      if (exception.response.status === 400) {
-        showNotification(exception.response.data.error)
-      }
-    }
+  const padding = {
+    padding: 5
   }
-
-
-  const addLike = async blog => {
-    console.log('adding a like to blog: ', blog)
-
-    const blogToSend = {
-      id: blog.id,
-      user: blog.user.id, // User as user ID to server
-      likes: blog.likes + 1,
-      author: blog.author,
-      title: blog.title,
-      url: blog.url
-    }
-
-    try {
-      const receivedBlog = await blogService.update(blogToSend)
-      const blogToSet = {
-        ...receivedBlog,
-        user: blog.user // Setting back the full user info
-      }
-
-      // Updating blogs
-      setBlogs(
-        blogs
-          .filter(b => b.id !== blogToSet.id)
-          .concat(blogToSet)
-          .sort(blogsByLikes))
-
-      showNotification(`${blogToSet.title} now has ${blogToSet.likes} likes`)
-
-    } catch (exception) {
-      // Could show error messages
-      showNotification('something went wrong')
-      if (exception.response.status === 400) {
-        showNotification(exception.response.data.error)
-      }
-    }
-  }
-
-  const removeBlog = async blogToRemove => {
-    if (!window.confirm(`Remove ${blogToRemove.title} by ${blogToRemove.author || 'Anonymous'}`)) {
-      return
-    }
-    console.log('removing', blogToRemove)
-    try {
-      await blogService.remove(blogToRemove.id)
-      setBlogs(blogs.filter(blog => blog.id !== blogToRemove.id))
-    } catch (exception) {
-      showNotification(exception.response.data.error)
-    }
-  }
-  */
 
   // When not logged in
   if (!loggedInUser) return (
@@ -167,19 +90,30 @@ const App = () => {
   )
   // When logged in
   return (
-    <div>
+    <BrowserRouter>
+      <div>
+        <Link to='/' style={padding}>blogs</Link>
+        <Link to='/users' style={padding}>users</Link>
+        <span style={padding}>
+          {loggedInUser.name} logged in
+        </span>
+        <button onClick={handleLogout} data-testid='logout-button' >logout</button>
+      </div>
       { notificationText && <h1>{notificationText}</h1> }
       <h2>blogs</h2>
-      <p>
-        {loggedInUser.name} logged in
-        <button onClick={handleLogout} data-testid='logout-button' >logout</button>
-      </p>
-      { blogsResult.isLoading && <p>Loading blogs</p> }
-      { blogsResult.isSuccess && <Blogs blogs={blogsResult.data} /> }
-      <Togglable buttonLabel='new blog' ref={blogFormRef}>
-        <BlogForm token={blogService.getToken()}  />
-      </Togglable>
-    </div>
+      <Routes>
+        <Route path='/users' element={<Users users={users} />} />
+        <Route path="/users/:id" element={<User users={users} />} />
+        <Route path="/blogs/:id" element={blogs ? <Blog blogs={blogs} /> : <div></div>} />
+        <Route path='/' element={<>
+          { blogsResult.isLoading && <p>Loading blogs</p> }
+          { blogsResult.isSuccess && <Blogs blogs={blogs} /> }
+          <Togglable buttonLabel='new blog' ref={blogFormRef}>
+            <BlogForm token={blogService.getToken()}  />
+          </Togglable>
+        </>}/>
+      </Routes>
+    </BrowserRouter>
   )
 }
 

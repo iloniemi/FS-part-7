@@ -24,3 +24,7 @@ export const deleteBlog = (idAndToken) => {
   const config = tokenToConfig(idAndToken.token)
   return axios.delete(`${baseUrl}/${id}`, config)
 }
+
+export const getUsers = () => {
+  return axios.get('/api/users').then(response => response.data)
+}
