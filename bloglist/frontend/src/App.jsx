@@ -9,10 +9,11 @@ import { setNotification, useNotificationDispatch, useNotificationText } from '.
 import { useQuery } from '@tanstack/react-query'
 import { getBlogs, getUsers } from './requests.js'
 import { useUserDispatch, useUserValue, userActions } from './UserContext.jsx'
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
 import Users from './components/Users.jsx'
 import User from './components/User.jsx'
 import Blog from './components/Blog.jsx'
+import { AppBar, Button, Container, IconButton, Toolbar } from '@mui/material'
 
 
 const App = () => {
@@ -20,6 +21,7 @@ const App = () => {
   const notificationDispatch = useNotificationDispatch()
   const userDispatch = useUserDispatch()
   const loggedInUser = useUserValue()
+  const navigate = useNavigate()
 
   const showNotification = (message) => {
     setNotification(notificationDispatch, message)
@@ -49,8 +51,11 @@ const App = () => {
     if (loggedUserJSON) {
       const loggedUser = JSON.parse(loggedUserJSON)
       userDispatch(userActions.setUser(loggedUser))
+    } else {
+      navigate('/login')
     }
   }, [])
+
 
 
   const handleLogin = async (username, password) => {
@@ -74,46 +79,35 @@ const App = () => {
 
     window.localStorage.removeItem('loggedBlogappUser')
     userDispatch(userActions.reset())
-    showNotification('logged out')
+    navigate('/login')
   }
 
-  const padding = {
-    padding: 5
-  }
-
-  // When not logged in
-  if (!loggedInUser) return (
-    <div>
-      { notificationText && <h1>{notificationText}</h1> }
-      <LoginForm handleLogin={handleLogin} />
-    </div>
-  )
-  // When logged in
   return (
-    <BrowserRouter>
-      <div>
-        <Link to='/' style={padding}>blogs</Link>
-        <Link to='/users' style={padding}>users</Link>
-        <span style={padding}>
-          {loggedInUser.name} logged in
-        </span>
-        <button onClick={handleLogout} data-testid='logout-button' >logout</button>
-      </div>
+    <Container>
+      <AppBar position='static'>
+        <Toolbar>
+          <IconButton edge='start' color='inherit' aria-label='menu'/>
+          <Button color='inherit' component={Link} to='/'>blogs</Button>
+          <Button color='inherit' component={Link} to='/users'>users</Button>
+          {loggedInUser && <em>{loggedInUser.name} logged in</em>}
+          {loggedInUser && <Button variant='contained' disableElevation onClick={handleLogout} data-testid='logout-button'>logout</Button>}
+        </Toolbar>
+      </AppBar>
       { notificationText && <h1>{notificationText}</h1> }
-      <h2>blogs</h2>
       <Routes>
+        <Route path='/login' element={<LoginForm handleLogin={handleLogin} />} />
         <Route path='/users' element={<Users users={users} />} />
         <Route path="/users/:id" element={<User users={users} />} />
         <Route path="/blogs/:id" element={blogs ? <Blog blogs={blogs} /> : <div></div>} />
         <Route path='/' element={<>
           { blogsResult.isLoading && <p>Loading blogs</p> }
           { blogsResult.isSuccess && <Blogs blogs={blogs} /> }
-          <Togglable buttonLabel='new blog' ref={blogFormRef}>
+          {loggedInUser && <Togglable buttonLabel='new blog' ref={blogFormRef}>
             <BlogForm token={blogService.getToken()}  />
-          </Togglable>
+          </Togglable>}
         </>}/>
       </Routes>
-    </BrowserRouter>
+    </Container>
   )
 }
 

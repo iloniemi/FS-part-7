@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createBlog } from '../requests'
 import { useUserValue } from '../UserContext'
 import { setNotification, useNotificationDispatch } from '../NotificationContext'
+import { Button } from '@mui/material'
 
 const BlogForm = () => {
   const [title, setTitle] = useState('')
@@ -49,7 +50,7 @@ const BlogForm = () => {
       <InputRow name='Title' value={title} setValue={setTitle} placeholder={'type in the title'} testid='new-blog-title'/>
       <InputRow name='Author' value={author} setValue={setAuthor} placeholder={'type in the author'} testid='new-blog-author' />
       <InputRow name='Url' value={url} setValue={setUrl} placeholder={'type in the url'} testid='new-blog-url' />
-      <button type='submit' data-testid='new-blog-submit-button' >create</button>
+      <Button type='submit' data-testid='new-blog-submit-button' >create</Button>
     </form>
   </>
 }

@@ -17,8 +17,6 @@ const Blog = ({ blogs }) => {
 
   const showNotification = (message) => setNotification(notificationDispatch, message)
 
-  const toggleShowAll = () => setShowAll(!showAll)
-
   const thisUsersBlog = blog.user.username === user.username
 
   const addLikeMutation = useMutation({

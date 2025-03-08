@@ -1,12 +1,11 @@
+import { TextField } from '@mui/material'
 import PropTypes from 'prop-types'
 
 const InputRow = ({ name, value, setValue, placeholder, testid }) => (
   <div>
-    {name}
-    <input
-      type="text"
+    <TextField
       value={value}
-      name={name}
+      label={name}
       onChange={({ target }) => setValue(target.value)}
       placeholder={placeholder || ''}
       data-testid={testid}

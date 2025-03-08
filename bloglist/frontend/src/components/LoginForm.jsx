@@ -1,9 +1,16 @@
 import { useState } from 'react'
 import PropTypes from 'prop-types'
+import { Button, TextField } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
+import { useUserValue } from '../UserContext'
 
 const LoginForm = ({ handleLogin }) => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const navigate = useNavigate()
+  const user = useUserValue()
+
+  if (user) navigate('/')
 
   const handleSubmit = (event) => {
     event.preventDefault()
@@ -17,29 +24,35 @@ const LoginForm = ({ handleLogin }) => {
 
   return (
     <div>
-      <h1 data-testid='login-header' >Login</h1>
+      <h2 data-testid='login-header' >Login</h2>
       <form onSubmit={handleSubmit}>
         <div>
-          username
-          <input
-            data-testid='login-username'
-            type='text'
+          <TextField
+            label="Username"
             value={username}
-            name='Username'
             onChange={({ target }) => setUsername(target.value)}
+            data-testid='login-username'
           />
         </div>
         <div>
-          password
-          <input
-            data-testid='login-password'
-            type='password'
+          <TextField
+            label="Password"
             value={password}
-            name='Password'
+            type='password'
             onChange={({ target }) => setPassword(target.value)}
+            data-testid='login-password'
           />
         </div>
-        <button data-testid='login-submit-button' type='submit'>login</button>
+        <div>
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            data-testid='login-submit-button'
+          >
+            login
+          </Button>
+        </div>
       </form>
     </div>
   )
